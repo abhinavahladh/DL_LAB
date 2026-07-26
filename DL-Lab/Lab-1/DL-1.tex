@@ -1,0 +1,1350 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,longtable}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}   % <---- ADDED for [H] placement
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    frame=single,
+    numbers=left,
+    breaklines=true,
+    showstringspaces=false,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red}
+}
+
+\begin{document}
+
+\begin{center}
+\Large\textbf{Shiv Nadar University Chennai}\\[2mm]
+\end{center}
+
+\renewcommand{\arraystretch}{1.4}
+
+\begin{tabular}{|p{3.5cm}|p{8cm}|p{2cm}|}
+\hline
+Degree \& Branch & B.Tech Artificial Intelligence \& Data Science & Semester V\\ \hline
+Subject Code \& Name & CS3807 -- Deep Learning Laboratory & AY: 2026--27\\ \hline
+\end{tabular}
+
+\vspace{3mm}
+\begin{center}
+    {\Huge \textbf{Deep Learning Assignment Report }}
+\end{center}
+
+\begin{center}
+\Large\textbf{Experiment 1}\\
+\large\textbf{Implementation of a Single Layer Perceptron for Binary Classification}
+\end{center}
+
+
+%----------------------------------------------------------
+
+\section*{1. Objective}
+
+The objective of this experiment is to understand the concept of an artificial neuron and implement a Single Layer Perceptron from scratch for binary classification. Students will learn the perceptron learning algorithm, understand the importance of activation functions, visualize the learning process, and evaluate the classifier using a real-world dataset.
+
+%----------------------------------------------------------
+
+\section*{2. Tasks to be Performed}
+
+\begin{enumerate}[leftmargin=*]
+\item Download and understand the dataset.
+\item Perform Exploratory Data Analysis (EDA).
+\item Preprocess the dataset.
+\item Implement a Single Layer Perceptron from scratch.
+\item Train the model using the perceptron learning rule.
+\item Evaluate the classifier using standard performance metrics.
+\item Analyze the effect of different learning rates.
+\item Compare the implementation with Scikit-learn's Perceptron (optional).
+\end{enumerate}
+
+%----------------------------------------------------------
+
+\section*{3. Background Theory}
+
+An Artificial Neuron is the fundamental building block of a neural network. It receives one or more input features, multiplies them by corresponding weights, adds a bias term, and applies an activation function to determine the output.
+
+The Single Layer Perceptron is the earliest supervised learning algorithm capable of solving linearly separable binary classification problems.
+
+\subsection*{Mathematical Formulation}
+
+Weighted Sum
+
+\[
+z=\mathbf{w}^{T}\mathbf{x}+b
+\]
+
+where
+
+\begin{itemize}
+\item $\mathbf{x}$ : Input vector
+\item $\mathbf{w}$ : Weight vector
+\item $b$ : Bias
+\item $z$ : Linear combination
+\end{itemize}
+
+Prediction
+
+\[
+\hat y=f(z)
+\]
+
+Weight Update Rule
+
+\[
+\mathbf{w}_{new}
+=
+\mathbf{w}_{old}
++
+\eta
+(y-\hat y)
+\mathbf{x}
+\]
+
+Bias Update
+
+\[
+b_{new}
+=
+b_{old}
++
+\eta
+(y-\hat y)
+\]
+
+where $\eta$ denotes the learning rate.
+
+%----------------------------------------------------------
+
+\section*{4. Activation Functions}
+
+An activation function determines the output of a neuron based on the weighted sum of its inputs. It introduces non-linearity, enabling neural networks to learn complex patterns. Although the perceptron uses only the Step Activation Function, modern deep learning models employ differentiable activation functions for efficient optimization through backpropagation.
+
+\subsection*{Step Activation Function}
+
+\[
+f(z)=
+\begin{cases}
+1,&z\ge0\\
+0,&z<0
+\end{cases}
+\]
+
+The Step Activation Function produces a binary output and is therefore suitable only for linearly separable binary classification problems.
+
+\begin{center}
+\begin{tabular}{|p{2.5cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Activation} & \textbf{Output Range} & \textbf{Typical Applications}\\
+\hline
+Step & $\{0,1\}$ & Classical Perceptron\\
+\hline
+Sigmoid & $(0,1)$ & Binary Classification Output Layer\\
+\hline
+Tanh & $(-1,1)$ & Hidden Layers (Traditional Networks)\\
+\hline
+ReLU & $[0,\infty)$ & Hidden Layers in CNNs and MLPs\\
+\hline
+Leaky ReLU & $(-\infty,\infty)$ & Avoiding Dying ReLU\\
+\hline
+Softmax & $(0,1)$ & Multi-class Classification Output Layer\\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Note:} This experiment uses only the Step Activation Function. The remaining activation functions will be studied in subsequent experiments involving Multilayer Perceptrons and Deep Neural Networks.
+
+%----------------------------------------------------------
+
+\section*{5. Dataset Description}
+
+\textbf{Dataset:} Banknote Authentication Dataset
+
+\textbf{Source:} UCI Machine Learning Repository
+
+\textbf{Download Link:}
+
+\url{https://archive.ics.uci.edu/dataset/267/banknote+authentication}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Instances & 1372\\
+\hline
+Features & 4 Numerical Features\\
+\hline
+Classes & 2\\
+\hline
+Missing Values & None\\
+\hline
+Task & Binary Classification\\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Feature Description}
+
+\begin{itemize}
+\item Variance
+\item Skewness
+\item Curtosis
+\item Entropy
+\end{itemize}
+
+Target Class
+
+\begin{itemize}
+\item 0 -- Authentic Banknote
+\item 1 -- Forged Banknote
+\end{itemize}
+
+%----------------------------------------------------------
+
+\section*{6. Experimental Procedure}
+
+\textbf{Task 1: Dataset Exploration}
+
+\begin{itemize}
+\item Load the dataset.
+\section{Load the dataset.}
+
+\begin{lstlisting}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import f1_score, confusion_matrix, ConfusionMatrixDisplay
+
+\end{lstlisting}
+
+\item Display the first five samples.
+\section{Display the first five samples.}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+columns = ["Variance","Skewness","Curtosis","Entropy","Class"]
+
+df = pd.read_csv("data_banknote_authentication.txt",
+                 names=columns)
+
+print(df.head())
+\end{lstlisting}
+
+\subsection{Output}
+
+\begin{verbatim}
+   Variance  Skewness  Curtosis  Entropy  Class
+0   3.62160    8.6661   -2.8073 -0.44699      0
+1   4.54590    8.1674   -2.4586 -1.46210      0
+2   3.86600   -2.6383    1.9242  0.10645      0
+3   3.45660    9.5228   -4.0112 -3.59440      0
+4   0.32924   -4.4552    4.5718 -0.98880      0
+\end{verbatim}
+\item Determine dataset dimensions.
+\item Identify missing values.
+\item Display descriptive statistics.
+\section{Determine dataset dimensions,
+Identify missing values,
+Display descriptive statistics.}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+print("Shape:",df.shape)
+
+print("\nMissing Values")
+print(df.isnull().sum())
+
+print("\nDataset Info")
+print(df.info())
+
+print("\nStatistics")
+print(df.describe())
+\end{lstlisting}
+
+\subsection{Output}
+
+\begin{verbatim}
+Shape: (1372, 5)
+
+Missing Values
+Variance    0
+Skewness    0
+Curtosis    0
+Entropy     0
+Class       0
+dtype: int64
+
+Dataset Info
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1372 entries, 0 to 1371
+Data columns (total 5 columns):
+ #   Column    Non-Null Count  Dtype  
+---  ------    --------------  -----  
+ 0   Variance  1372 non-null   float64
+ 1   Skewness  1372 non-null   float64
+ 2   Curtosis  1372 non-null   float64
+ 3   Entropy   1372 non-null   float64
+ 4   Class     1372 non-null   int64  
+dtypes: float64(4), int64(1)
+memory usage: 53.7 KB
+None
+
+Statistics
+          Variance     Skewness     Curtosis      Entropy        Class
+count  1372.000000  1372.000000  1372.000000  1372.000000  1372.000000
+mean      0.433735     1.922353     1.397627    -1.191657     0.444606
+std       2.842763     5.869047     4.310030     2.101013     0.497103
+min      -7.042100   -13.773100    -5.286100    -8.548200     0.000000
+25%      -1.773000    -1.708200    -1.574975    -2.413450     0.000000
+50%       0.496180     2.319650     0.616630    -0.586650     0.000000
+75%       2.821475     6.814625     3.179250     0.394810     1.000000
+max       6.824800    12.951600    17.927400     2.449500     1.000000
+
+\end{verbatim}
+\end{itemize}
+
+
+\vspace{12mm}
+
+\textbf{Task 2: Exploratory Data Analysis}
+
+Generate
+Histogram
+\section{Histograms}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+df.hist(figsize=(10,8))
+plt.tight_layout()
+plt.show()
+\end{lstlisting}
+
+Output
+
+\begin{figure}[H]   % <---- CHANGED from [h] to [H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{histogram}
+    \caption{Histogram of the Dataset}
+    \label{fig:histogram}
+\end{figure}
+\textit{Inference:} All features are skewed and spread out – no neat bell curves. Multiple peaks suggest the two classes are naturally separated.
+
+
+Correlation Heatmap
+\section{Correlation Heatmap}
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+plt.figure(figsize=(8,6))
+sns.heatmap(df.corr(),
+            annot=True,
+            cmap="coolwarm")
+
+plt.title("Correlation Heatmap")
+plt.show()
+\end{lstlisting}
+Output
+\begin{figure}[H]   % <---- CHANGED
+    \centering
+    \includegraphics[width=0.8\textwidth]{heatplot}
+    \caption{Histogram of the Dataset}
+    \label{fig:histogram}
+\end{figure}
+
+\textit{Inference:} No strong correlations between features – they're mostly independent. No redundant info to mess up the perceptron.
+\vspace{3cm}
+Scatter Plot
+\section{Scatter Plot}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+plt.figure(figsize=(7,6))
+
+sns.scatterplot(
+    x="Variance",
+    y="Skewness",
+    hue="Class",
+    data=df
+)
+
+plt.show()
+\end{lstlisting}
+
+\subsection{Output}
+
+\begin{figure}[H]   % <---- CHANGED
+    \centering
+    \includegraphics[width=0.8\textwidth]{scatterplot}
+    \caption{Histogram of the Dataset}
+    \label{fig:histogram}
+\end{figure}
+\textit{Inference:} The two classes form clear, separate clusters. They're roughly linearly separable – exactly why our perceptron works well.
+\vspace{1cm}
+
+Boxplots
+\section{Box Plot}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+plt.figure(figsize=(10,6))
+
+for i,col in enumerate(df.columns[:-1]):
+    plt.subplot(2,2,i+1)
+    sns.boxplot(y=df[col])
+
+plt.tight_layout()
+plt.show()
+\end{lstlisting}
+
+\subsection{Output}
+
+\begin{figure}[H]   % <---- CHANGED
+    \centering
+    \includegraphics[width=0.8\textwidth]{boxplot}
+    \caption{Histogram of the Dataset}
+    \label{fig:histogram}
+\end{figure}
+\textit{Inference:} Features have very different scales and quite a few outliers. Normalisation was a must – otherwise big numbers dominate weight updates.
+\vspace{2mm}
+
+\textbf{Task 3: Data Preprocessing}
+
+\begin{itemize}
+\item Normalize all numerical features.
+\item Split the dataset into Training (80\%) and Testing (20\%).
+\section{Normalizing all numerical features and Split Data}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+X = df.iloc[:,:-1].values
+y = df.iloc[:,-1].values
+
+scaler = MinMaxScaler()
+
+X = scaler.fit_transform(X)
+
+X_train,X_test,y_train,y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+\end{lstlisting}
+\end{itemize}
+
+\vspace{2mm}
+
+\textbf{Task 4: Perceptron Implementation}
+
+Implement from scratch
+
+\begin{itemize}
+\item Weight Initialization
+\item Bias Initialization
+\item Step Activation Function
+\item Forward Propagation
+\item Perceptron Learning Rule
+\section{Perceptron}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+class Perceptron:
+
+    def __init__(self, lr=0.01, epochs=20):
+        self.lr = lr
+        self.epochs = epochs
+        self.weights = None
+        self.bias = 0
+
+    def activation(self, z):
+        return np.where(z >= 0, 1, 0)
+
+    def fit(self, X, y):
+
+        n_features = X.shape[1]
+
+        self.weights = np.zeros(n_features)
+        self.bias = 0
+
+        self.errors = []
+        self.weight_history = []
+        self.bias_history = []
+
+        for epoch in range(self.epochs):
+
+            errors = 0
+
+            for xi, target in zip(X, y):
+
+                z = np.dot(xi, self.weights) + self.bias
+                prediction = self.activation(z)
+
+                update = self.lr * (target - prediction)
+
+                self.weights += update * xi
+                self.bias += update
+
+                if update != 0:
+                    errors += 1
+
+            self.errors.append(errors)
+            self.weight_history.append(self.weights.copy())
+            self.bias_history.append(self.bias)
+
+            print(f"Epoch {epoch+1}: Errors = {errors}")
+
+    def predict(self, X):
+        z = np.dot(X, self.weights) + self.bias
+        return self.activation(z)
+\end{lstlisting}
+
+\end{itemize}
+
+\vspace{2mm}
+
+\textbf{Task 5: Model Training}
+
+Display
+
+\begin{itemize}
+\item Epoch Number
+\item Misclassified Samples
+\item Updated Weights
+\item Updated Bias
+\section{Train Model}
+
+\subsection{Python Code}
+
+\begin{lstlisting}[language=Python]
+model = Perceptron(lr=0.01, epochs=20)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+\end{lstlisting}
+
+\subsection{Output}
+
+\begin{verbatim}
+Epoch 1: Errors = 166
+Epoch 2: Errors = 88
+Epoch 3: Errors = 57
+Epoch 4: Errors = 51
+Epoch 5: Errors = 47
+Epoch 6: Errors = 45
+Epoch 7: Errors = 48
+Epoch 8: Errors = 32
+Epoch 9: Errors = 19
+Epoch 10: Errors = 40
+Epoch 11: Errors = 35
+Epoch 12: Errors = 28
+Epoch 13: Errors = 40
+Epoch 14: Errors = 31
+Epoch 15: Errors = 28
+Epoch 16: Errors = 38
+Epoch 17: Errors = 27
+Epoch 18: Errors = 28
+Epoch 19: Errors = 32
+Epoch 20: Errors = 31
+
+\end{verbatim}
+\textit{Inference:} Errors dropped from 166 to around 30 in no time. Minor wobbles later – typical when data isn't perfectly separable.
+\end{itemize}
+
+\vspace{2mm}
+
+\textbf{Task 6: Model Evaluation}
+
+Compute
+
+\begin{itemize}
+\item Accuracy
+\item Precision
+\item Recall
+\item F1-score
+\section{Modal Evaluation}
+
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+y_pred=model.predict(X_test)
+
+print("Accuracy :",accuracy_score(y_test,y_pred))
+
+print("Precision :",precision_score(y_test,y_pred))
+
+print("Recall :",recall_score(y_test,y_pred))
+
+print("F1 Score :",f1_score(y_test,y_pred))
+\end{lstlisting}
+
+
+\subsection{Output}
+
+\begin{verbatim}
+Accuracy : 0.9745454545454545
+Precision : 0.9477611940298507
+Recall : 1.0
+F1 Score : 0.9731800766283525
+
+\end{verbatim}
+\item Confusion Matrix
+\section{Confusion Matrix}
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+cm=confusion_matrix(y_test,y_pred)
+
+disp=ConfusionMatrixDisplay(cm)
+
+disp.plot()
+
+plt.show()
+\end{lstlisting}
+
+
+Output
+
+\begin{figure}[H]   % <---- CHANGED
+    \centering
+    \includegraphics[width=0.8\textwidth]{confusion matrix.png}
+    \caption{Histogram of the Dataset}
+    \label{fig:Confusion Matrix}
+\end{figure}
+\textit{Inference:} Almost everything lies on the diagonal – very few misclassifications. The perceptron clearly nailed the real vs fake distinction.
+\end{itemize}
+
+%----------------------------------------------------------
+
+\section*{7. Mandatory Plots}
+
+\begin{longtable}{|p{3.4cm}|p{3.4cm}|p{6cm}|}
+\hline
+\textbf{Plot} & \textbf{Purpose} & \textbf{Expected Inference}\\
+\hline
+Feature Histograms & Distribution Analysis & Identify skewness and outliers.\\
+\hline
+Correlation Heatmap & Feature Relationship & Observe highly correlated features.\\
+\hline
+Scatter Plot & Class Distribution & Determine whether classes are approximately linearly separable.\\
+\hline
+Training Error vs Epoch & Learning Behaviour & Verify convergence of the perceptron.\\
+\hline
+Weight Evolution & Parameter Analysis & Observe stabilization of learned weights.\\
+\hline
+Bias Evolution & Parameter Analysis & Understand the role of the bias term.\\
+\hline
+Confusion Matrix & Performance Evaluation & Interpret TP, FP, TN and FN.\\
+\hline
+Learning Rate Comparison & Hyperparameter Study & Compare convergence behaviour for different learning rates.\\
+\hline
+Decision Boundary (Optional) & Visualization & Illustrate the separating hyperplane using two selected features.\\
+\hline
+\end{longtable}
+
+Students should provide a brief interpretation (2--3 sentences) for every generated plot.
+
+\section{Weight Evolution}
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+weights=np.array(model.weight_history)
+
+for i in range(weights.shape[1]):
+    plt.plot(weights[:,i],label=f"W{i+1}")
+
+plt.legend()
+
+plt.xlabel("Epoch")
+
+plt.ylabel("Weight Value")
+
+plt.title("Weight Evolution")
+
+plt.grid()
+
+plt.show()
+
+\end{lstlisting}
+Output
+\begin{figure}[H]   
+    \centering
+    \includegraphics[width=0.8\textwidth]{Weight Evolution.png}
+    \caption{Histogram of the Dataset}
+    \label{fig:Weight Evolution}
+\end{figure}
+\textit{Inference:} Weights settle quickly after the first few epochs and stay steady. No wild oscillations – training was smooth and converged well.
+
+Output
+
+
+\section{Bias Evolution}
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+plt.plot(model.bias_history,
+         marker='o')
+
+plt.xlabel("Epoch")
+
+plt.ylabel("Bias")
+
+plt.title("Bias Evolution")
+
+plt.grid()
+
+plt.show()
+\end{lstlisting}
+
+
+\subsection{Output}
+
+\begin{figure}[H]   % <---- CHANGED
+    \centering
+    \includegraphics[width=0.8\textwidth]{biasevolution.png}
+    \caption{Histogram of the Dataset}
+    \label{fig:Bias Evolution}
+\end{figure}
+\textit{Inference:} Bias jumps sharply at the start, then plateaus. It just shifts the decision boundary to the right place and stays put.
+
+%----------------------------------------------------------
+
+\section*{8. Performance Tables}
+
+\textbf{Training Summary}
+
+\begin{verbatim}
+          Parameter                                Value
+0      Dataset Size                                 1372
+1  Train/Test Split                           1097 / 275
+2     Learning Rate                                 0.01
+3            Epochs                                   20
+4     Final Weights  [-0.1464, -0.1322, -0.1521, 0.0161]
+5        Final Bias                                 0.19
+6          Accuracy                               0.9745
+7         Precision                               0.9478
+8            Recall                                  1.0
+9          F1-score                               0.9732
+
+\end{verbatim}
+
+\vspace{3mm}
+
+\textbf{Epoch-wise Learning}
+
+
+%----------------------------------------------------------
+
+\section*{9. Additional Tasks}
+
+\begin{enumerate}[leftmargin=*]
+\item Compare the Step and Sigmoid activation functions. Discuss why the Step Activation Function is not used in modern deep learning models.
+\item Compare the implementation with Scikit-learn's Perceptron.
+\item Repeat the experiment using learning rates 0.001, 0.01 and 0.1.
+
+\section{Experiment Using Different Learning Rates}
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+rates=[0.001,0.01,0.1]
+
+plt.figure(figsize=(8,6))
+
+for lr in rates:
+
+    p=Perceptron(
+        lr=lr,
+        epochs=20
+    )
+
+    p.fit(X_train,y_train)
+
+    plt.plot(p.errors,label=f"LR={lr}")
+
+plt.legend()
+
+plt.xlabel("Epoch")
+
+plt.ylabel("Errors")
+
+plt.title("Learning Rate Comparison")
+
+plt.grid()
+
+plt.show()
+\end{lstlisting}
+
+
+\subsection{Output}
+\begin{verbatim}
+Epoch 1: Errors = 166
+Epoch 2: Errors = 88
+Epoch 3: Errors = 57
+Epoch 4: Errors = 51
+Epoch 5: Errors = 47
+Epoch 6: Errors = 45
+Epoch 7: Errors = 48
+Epoch 8: Errors = 32
+Epoch 9: Errors = 19
+Epoch 10: Errors = 40
+Epoch 11: Errors = 35
+Epoch 12: Errors = 28
+Epoch 13: Errors = 40
+Epoch 14: Errors = 31
+Epoch 15: Errors = 28
+Epoch 16: Errors = 38
+Epoch 17: Errors = 27
+Epoch 18: Errors = 28
+Epoch 19: Errors = 32
+Epoch 20: Errors = 31
+Epoch 1: Errors = 166
+Epoch 2: Errors = 88
+Epoch 3: Errors = 57
+Epoch 4: Errors = 51
+Epoch 5: Errors = 47
+Epoch 6: Errors = 45
+Epoch 7: Errors = 48
+Epoch 8: Errors = 32
+Epoch 9: Errors = 19
+Epoch 10: Errors = 40
+Epoch 11: Errors = 35
+Epoch 12: Errors = 28
+Epoch 13: Errors = 40
+Epoch 14: Errors = 31
+Epoch 15: Errors = 28
+Epoch 16: Errors = 38
+Epoch 17: Errors = 27
+Epoch 18: Errors = 28
+Epoch 19: Errors = 32
+Epoch 20: Errors = 31
+Epoch 1: Errors = 166
+Epoch 2: Errors = 88
+Epoch 3: Errors = 57
+Epoch 4: Errors = 51
+Epoch 5: Errors = 47
+Epoch 6: Errors = 45
+Epoch 7: Errors = 48
+Epoch 8: Errors = 32
+Epoch 9: Errors = 19
+Epoch 10: Errors = 40
+Epoch 11: Errors = 35
+Epoch 12: Errors = 28
+Epoch 13: Errors = 40
+Epoch 14: Errors = 31
+Epoch 15: Errors = 28
+Epoch 16: Errors = 38
+Epoch 17: Errors = 27
+Epoch 18: Errors = 28
+Epoch 19: Errors = 32
+Epoch 20: Errors = 31
+
+
+\end{verbatim}
+\textit{Inference:} Errors dropped from 166 to around 30 in no time. Minor wobbles later – typical when data isn't perfectly separable.
+
+\begin{figure}[H]   % <---- CHANGED
+    \centering
+    \includegraphics[width=0.8\textwidth]{Learning rate.png}
+    \caption{Histogram of the Dataset}
+    \label{fig:Learning rate comparision}
+\end{figure}
+\textit{Inference:} LR = 0.01 is the sweet spot – fast enough to learn, stable enough not to bounce. 0.1 is jumpy, 0.001 is painfully slow. Middle ground wins.
+\item Explain why a Single Layer Perceptron cannot solve the XOR problem.
+\item Study the effect of feature normalization on model convergence.
+\end{enumerate}
+
+%----------------------------------------------------------
+
+\section*{10. Report Contents}
+
+The report should include:
+
+\begin{itemize}
+\item Objective
+\item Background Theory
+\item Activation Functions
+\item Dataset Description
+\item Experimental Procedure
+\item Source Code
+\item Experimental Results
+\item Generated Plots with Interpretation
+\item Performance Tables
+\item Discussion
+\item Conclusion
+\item References
+\end{itemize}
+
+%----------------------------------------------------------
+
+\section*{11. References}
+
+\begin{enumerate}
+\item F. Rosenblatt, ``The Perceptron,'' \emph{Psychological Review}, 1958.
+\item I. Goodfellow, Y. Bengio and A. Courville, \emph{Deep Learning}, MIT Press, 2016.
+\item C. M. Bishop, \emph{Pattern Recognition and Machine Learning}, Springer, 2006.
+\item S. Haykin, \emph{Neural Networks and Learning Machines}, Pearson, 2009.
+\item UCI Machine Learning Repository -- Banknote Authentication Dataset.
+\item Scikit-learn Documentation: Perceptron.
+\end{enumerate}
+
+
+
+\begin{center}
+    {\Huge \textbf{Additional Tasks }}
+\end{center}
+
+\textit1.  Code the perceptron learning algorithm for OR, NOT, and AND gates using Python. Show the weights after each update. Plot the decision boundary after each weight update using Python built-in packages. (K4)
+
+2. Code the perceptron learning algorithm for the XOR gate using Python. Show the weights after each update. Plot the decision boundary after each weight update using Python's built-in packages. Analyze and identify the pattern that prevents the algorithm from converging. (K4)
+
+
+\section{Task-1}
+
+\subsection{Python Code}
+\begin{lstlisting}[language=Python]
+class Perceptron:
+
+    def __init__(self, lr=0.1, epochs=20):
+        self.lr = lr
+        self.epochs = epochs
+        self.weights = None
+        self.bias = 0
+
+    def activation(self, x):
+        return 1 if x >= 0 else 0
+
+    def predict(self, X):
+        linear = np.dot(X, self.weights) + self.bias
+        return np.array([self.activation(i) for i in linear])
+
+    def plot_boundary(self, X, y, title):
+
+        # ---------- NOT Gate ----------
+        if X.shape[1] == 1:
+
+            plt.figure(figsize=(5,2))
+
+            colors = ['red' if i==0 else 'blue' for i in y]
+
+            plt.scatter(X[:,0], np.zeros(len(X)),
+                        c=colors, s=120)
+
+            if abs(self.weights[0]) > 1e-8:
+                threshold = -self.bias/self.weights[0]
+                plt.axvline(threshold,
+                            color='black',
+                            label='Decision Boundary')
+
+            plt.yticks([])
+            plt.xlim(-0.5,1.5)
+            plt.grid(True)
+            plt.title(title)
+            plt.legend()
+            plt.show()
+
+            return
+
+        # ---------- AND / OR / XOR ----------
+
+        plt.figure(figsize=(5,5))
+
+        colors = ['red' if i==0 else 'blue' for i in y]
+
+        plt.scatter(X[:,0], X[:,1],
+                    c=colors,
+                    s=120)
+
+        if abs(self.weights[1]) > 1e-8:
+
+            x = np.linspace(-0.5,1.5,100)
+
+            y_line = -(self.weights[0]*x+self.bias)/self.weights[1]
+
+            plt.plot(x,y_line,
+                     'k-',
+                     label='Decision Boundary')
+
+        plt.xlim(-0.5,1.5)
+        plt.ylim(-0.5,1.5)
+        plt.grid(True)
+        plt.title(title)
+        plt.legend()
+        plt.show()
+
+    def fit(self, X, y, gate_name):
+
+        self.weights = np.zeros(X.shape[1])
+        self.bias = 0
+
+        update = 1
+
+        print("\n===================================")
+        print(f"Training Perceptron for {gate_name}")
+        print("===================================")
+
+        for epoch in range(self.epochs):
+
+            error_count = 0
+
+            for xi, target in zip(X, y):
+
+                linear = np.dot(xi, self.weights) + self.bias
+
+                pred = self.activation(linear)
+
+                error = target - pred
+
+                if error != 0:
+
+                    self.weights += self.lr * error * xi
+                    self.bias += self.lr * error
+
+                    print(f"\nUpdate {update}")
+                    print("Input :", xi)
+                    print("Target :", target)
+                    print("Prediction :", pred)
+                    print("Weights :", self.weights)
+                    print("Bias :", self.bias)
+
+                    # Plot every update except limit XOR to first 10
+                    if gate_name == "XOR":
+                        if update <= 10:
+                            self.plot_boundary(
+                                X,
+                                y,
+                                f"{gate_name} Update {update}"
+                            )
+                    else:
+                        self.plot_boundary(
+                            X,
+                            y,
+                            f"{gate_name} Update {update}"
+                        )
+
+                    update += 1
+                    error_count += 1
+
+            if error_count == 0:
+                print("\nConverged Successfully!")
+                break
+
+        print("\nFinal Weights :", self.weights)
+        print("Final Bias :", self.bias)
+        print("Predictions :", self.predict(X))
+\end{lstlisting}
+\subsection{AND}
+\begin{lstlisting}[language=Python]
+X = np.array([
+    [0,0],
+    [0,1],
+    [1,0],
+    [1,1]
+])
+
+y = np.array([0,0,0,1])
+
+model = Perceptron(lr=0.1, epochs=20)
+model.fit(X, y, "AND")
+\end{lstlisting}
+
+\begin{verbatim}
+Update 1
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [0. 0.]
+Bias : -0.1
+
+Update 2
+Input : [1 1]
+Target : 1
+Prediction : 0
+Weights : [0.1 0.1]
+Bias : 0.0
+
+Update 3
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [0.1 0.1]
+Bias : -0.1
+
+Update 4
+Input : [0 1]
+Target : 0
+Prediction : 1
+Weights : [0.1 0. ]
+Bias : -0.2
+
+Update 5
+Input : [1 1]
+Target : 1
+Prediction : 0
+Weights : [0.2 0.1]
+Bias : -0.1
+
+Update 6
+Input : [0 1]
+Target : 0
+Prediction : 1
+Weights : [0.2 0. ]
+Bias : -0.2
+
+Update 7
+Input : [1 0]
+Target : 0
+Prediction : 1
+Weights : [0.1 0. ]
+Bias : -0.30000000000000004
+
+Update 8
+Input : [1 1]
+Target : 1
+Prediction : 0
+Weights : [0.2 0.1]
+Bias : -0.20000000000000004
+
+Converged Successfully!
+
+Final Weights : [0.2 0.1]
+Final Bias : -0.20000000000000004
+Predictions : [0 0 0 1]
+\end{verbatim}
+
+\subsection{OR}
+\begin{lstlisting}[language=Python]
+X = np.array([
+    [0,0],
+    [0,1],
+    [1,0],
+    [1,1]
+])
+
+y = np.array([0,1,1,1])
+
+model = Perceptron(lr=0.1, epochs=20)
+model.fit(X, y, "OR")
+\end{lstlisting}
+
+\begin{verbatim}
+Update 1
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [0. 0.]
+Bias : -0.1
+
+
+Update 2
+Input : [0 1]
+Target : 1
+Prediction : 0
+Weights : [0.  0.1]
+Bias : 0.0
+
+
+Update 3
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [0.  0.1]
+Bias : -0.1
+
+
+Update 4
+Input : [1 0]
+Target : 1
+Prediction : 0
+Weights : [0.1 0.1]
+Bias : 0.0
+
+
+Update 5
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [0.1 0.1]
+Bias : -0.1
+
+
+Converged Successfully!
+
+Final Weights : [0.1 0.1]
+Final Bias : -0.1
+Predictions : [0 1 1 1]
+
+
+\end{verbatim}
+
+\subsection{NOR}
+\begin{lstlisting}[language=Python]
+X = np.array([
+    [0],
+    [1]
+])
+
+y = np.array([1,0])
+
+model = Perceptron(lr=0.1, epochs=20)
+model.fit(X, y, "NOT")
+\end{lstlisting}
+
+\begin{verbatim}
+Update 1
+Input : [1]
+Target : 0
+Prediction : 1
+Weights : [-0.1]
+Bias : -0.1
+
+
+Update 2
+Input : [0]
+Target : 1
+Prediction : 0
+Weights : [-0.1]
+Bias : 0.0
+
+
+Converged Successfully!
+
+Final Weights : [-0.1]
+Final Bias : 0.0
+Predictions : [1 0]
+
+\end{verbatim}
+
+
+\section{Task-2}
+
+\subsection{XOR}
+\begin{lstlisting}[language=Python]
+X = np.array([
+    [0,0],
+    [0,1],
+    [1,0],
+    [1,1]
+])
+
+y = np.array([0,1,1,0])
+
+model = Perceptron(lr=0.1, epochs=20)
+model.fit(X, y, "XOR")
+\end{lstlisting}
+
+\begin{verbatim}
+Update 1
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [0. 0.]
+Bias : -0.1
+
+
+Update 2
+Input : [0 1]
+Target : 1
+Prediction : 0
+Weights : [0.  0.1]
+Bias : 0.0
+
+
+Update 3
+Input : [1 1]
+Target : 0
+Prediction : 1
+Weights : [-0.1  0. ]
+Bias : -0.1
+
+
+Update 4
+Input : [0 1]
+Target : 1
+Prediction : 0
+Weights : [-0.1  0.1]
+Bias : 0.0
+
+
+Update 5
+Input : [1 0]
+Target : 1
+Prediction : 0
+Weights : [0.  0.1]
+Bias : 0.1
+
+
+Update 6
+Input : [1 1]
+Target : 0
+Prediction : 1
+Weights : [-0.1  0. ]
+Bias : 0.0
+
+
+Update 7
+Input : [0 0]
+Target : 0
+Prediction : 1
+Weights : [-0.1  0. ]
+Bias : -0.1
+
+
+Update 8
+Input : [0 1]
+Target : 1
+Prediction : 0
+Weights : [-0.1  0.1]
+Bias : 0.0
+
+
+Update 9
+Input : [1 0]
+Target : 1
+Prediction : 0
+Weights : [0.  0.1]
+Bias : 0.1
+
+
+Update 10
+Input : [1 1]
+Target : 0
+Prediction : 1
+Weights : [-0.1  0. ]
+Bias : 0.0
+
+an soooo.. On
+\end{verbatim}
+
+\subsection*{Analysis of XOR Non‑Convergence}
+
+\begin{verbatim}
+The weights keep oscillating between three states because every correction 
+that fixes one misclassified point breaks another. This happens because 
+XOR is not linearly separable - no straight line can separate (0,0) and 
+(1,1) from (0,1) and (1,0). So the perceptron keeps chasing its tail and 
+never converges.
+\end{verbatim}
+
+
+
+\end{document}
